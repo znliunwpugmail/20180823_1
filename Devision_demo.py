@@ -93,9 +93,9 @@ class Devision():
                     next_state = np.hstack((next_user_states, next_capacility_states))
                     # reward = g_at - LAMBDA * np.max(self.relu(-1 * next_capacility_states))
                     reward = copy.deepcopy(next_capacility_states)
-                    print('reward',reward)
-                    reward[reward[:,2]>0,0:2] = -np.abs(reward[reward[:,2]>0,0:2])//1000;
-                    print('reward1',reward)
+                    # print('reward',reward)
+                    reward[reward[:,2]>0,0:2] = -np.abs(reward[reward[:,2]>0,0:2]);
+                    # print('reward1',reward)
                     total_reward += np.sum(reward)
                     agent.percieve(state,actions,reward,next_state,False)
                     print('now_capacility', capacility_state)

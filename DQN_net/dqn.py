@@ -54,65 +54,46 @@ class DQN():
         one_hot_action = np.zeros( [ len(action),self.action_dim ] )
         for i in range(len(action)):
             one_hot_action[i,action[i]] = 1
-        self.replay_buffer.append( [ state, one_hot_action, reward, next_state, done ] )
-
-        if len( self.replay_buffer ) > REPLAY_SIZE:
-            self.replay_buffer.popleft()
-        if len( self.replay_buffer ) > TRAIN_START_SIZE:
-            self.train()
+        self.replay_buffer = [ state, one_hot_action, reward, next_state, done ]
+        self.train()
 
     def train(self):
-        mini_batch = random.sample( self.replay_buffer, BATCH_SIZE )
-        state_batch = [data[0] for data in mini_batch]
-        action_batch = [data[1] for data in mini_batch]
-        reward_batch = [ data[2] for data in mini_batch ]
-        next_state_batch = [ data[3] for data in mini_batch ]
-        done_batch = [ data[4] for data in mini_batch ]
+        # mini_batch = random.sample( self.replay_buffer, BATCH_SIZE )
+        # state_batch = [data[0] for data in mini_batch]
+        # action_batch = [data[1] for data in mini_batch]
+        # reward_batch = [ data[2] for data in mini_batch ]
+        # next_state_batch = [ data[3] for data in mini_batch ]
+        # done_batch = [ data[4] for data in mini_batch ]
+        #
+        # state_batch = np.array(state_batch)
+        # action_batch = np.array(action_batch)
+        # reward_batch = np.array(reward_batch)
+        # next_state_batch = np.array(next_state_batch)
+        # done_batch = np.array(done_batch)
 
-        state_batch = np.array(state_batch)
-        action_batch = np.array(action_batch)
-        reward_batch = np.array(reward_batch)
-        next_state_batch = np.array(next_state_batch)
-        done_batch = np.array(done_batch)
+        state_batch = np.array(self.replay_buffer[0])
+        action_batch = np.array(self.replay_buffer[1])
+        reward_batch = np.array(self.replay_buffer[2])
+        next_state_batch = np.array(self.replay_buffer[3])
 
         y_batch = []
-        next_state_reward = self.Q_value.eval( feed_dict = { self.input_layer : next_state_batch.reshape(-1,next_state_batch.shape[2])} )
-        reward_batch = reward_batch.reshape(-1,reward_batch.shape[2])
-        for i in range( BATCH_SIZE*state_batch.shape[1] ):
-            if done_batch[ i//state_batch.shape[1] ]:
-
-                y_batch.append( reward_batch[ i ] )
-            else:
-                # y_batch.append( reward_batch[ i ] + GAMMA * np.max( next_state_reward[i] ) )
-                y_batch.append(reward_batch[i] + GAMMA*next_state_reward[i])
+        next_state_reward = self.Q_value.eval( feed_dict = { self.input_layer : next_state_batch.reshape(-1,next_state_batch.shape[1])} )
+        reward_batch = reward_batch.reshape(-1,reward_batch.shape[1])
+        for i in range(state_batch.shape[0]):
+            y_batch.append(reward_batch[i] + GAMMA*next_state_reward[i])
         y_batch = np.array(y_batch)
         self.optimizer.run(
             feed_dict = {
-                self.input_layer:state_batch.reshape(-1,state_batch.shape[2]),
-                self.action_input:action_batch.reshape(-1,action_batch.shape[2]),
+                self.input_layer:state_batch.reshape(-1,state_batch.shape[1]),
+                self.action_input:action_batch.reshape(-1,action_batch.shape[1]),
                 self.y_input:y_batch
             }
         )
-        cost = self.sess.run(self.cost,
-                      feed_dict = {
-                self.input_layer:state_batch.reshape(-1,state_batch.shape[2]),
-                self.action_input:action_batch.reshape(-1,action_batch.shape[2]),
-                self.y_input:y_batch
-            })
-        value = self.sess.run(self.Q_value,
-                             feed_dict={
-                                 self.input_layer: state_batch.reshape(-1, state_batch.shape[2]),
-                             })
-
-        # print('cost',cost)
-
-        # print('y_batch',y_batch)
         return
     def get_greedy_action(self, state):
         value = self.Q_value.eval( feed_dict = { self.input_layer : state } )
-        print('value', value)
-        print(np.argmax(value, axis=1))
-        print(len(value))
+        # print(value)
+        # print(np.argmax(value,axis=1))
         return np.argmax( value,axis=1 )
 
     def get_action(self, state):
